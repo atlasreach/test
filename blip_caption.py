@@ -22,13 +22,19 @@ def main():
     ).to(device)
 
     exts = {".jpg",".jpeg",".png",".webp"}
-    image_paths = [p for p in IMAGE_DIR.rglob("*") if p.suffix.lower() in exts and p.is_file() and '.git' not in str(p)]
+    # Filter out .venv and .git directories
+    image_paths = [p for p in IMAGE_DIR.rglob("*")
+                   if p.suffix.lower() in exts
+                   and p.is_file()
+                   and '.git' not in str(p)
+                   and '.venv' not in str(p)]
     if not image_paths:
         print(f"❌ No images found in {IMAGE_DIR.resolve()}")
         sys.exit(1)
 
     print(f"🖼️ Found {len(image_paths)} images.\n")
 
+    cuda_failed = False
     with open(OUT_CSV, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["filename","prompt"])
@@ -41,8 +47,26 @@ def main():
                 prompt = f"{TRIGGER}, {caption}" if TRIGGER else caption
                 rel = str(p.relative_to(IMAGE_DIR))
                 writer.writerow([rel, prompt])
+            except RuntimeError as e:
+                if "CUDA" in str(e) and not cuda_failed:
+                    print(f"\n⚠️  CUDA error detected. Switching to CPU...")
+                    cuda_failed = True
+                    device = "cpu"
+                    model = model.to(device)
+                    # Retry this image on CPU
+                    try:
+                        inputs = processor(images=img, return_tensors="pt").to(device)
+                        out = model.generate(**inputs, max_new_tokens=MAX_TOKENS)
+                        caption = processor.decode(out[0], skip_special_tokens=True).strip()
+                        prompt = f"{TRIGGER}, {caption}" if TRIGGER else caption
+                        rel = str(p.relative_to(IMAGE_DIR))
+                        writer.writerow([rel, prompt])
+                    except Exception as e2:
+                        print(f"⚠️  Failed on {p.name}: {e2}")
+                else:
+                    print(f"⚠️  Failed on {p.name}: {e}")
             except Exception as e:
-                print(f"⚠️  Failed on {p}: {e}")
+                print(f"⚠️  Failed on {p.name}: {e}")
 
     print(f"\n✅ DONE → {OUT_CSV}")
 
