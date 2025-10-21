@@ -6,6 +6,9 @@ echo "📥 Downloading SDXL base model..."
 # Install HF CLI if not present
 pip install -q huggingface_hub
 
+# Disable hf_transfer
+export HF_HUB_ENABLE_HF_TRANSFER=0
+
 echo ""
 echo "⚠️  You need a HuggingFace token to download SDXL."
 echo "Get one at: https://huggingface.co/settings/tokens"
@@ -18,6 +21,8 @@ huggingface-cli login
 echo ""
 echo "📥 Downloading stabilityai/stable-diffusion-xl-base-1.0..."
 python3 << 'EOF'
+import os
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
 from huggingface_hub import snapshot_download
 import os
 
