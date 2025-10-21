@@ -22,7 +22,7 @@ def main():
     ).to(device)
 
     exts = {".jpg",".jpeg",".png",".webp"}
-    image_paths = [p for p in IMAGE_DIR.rglob("*") if p.suffix.lower() in exts]
+    image_paths = [p for p in IMAGE_DIR.rglob("*") if p.suffix.lower() in exts and p.is_file() and '.git' not in str(p)]
     if not image_paths:
         print(f"❌ No images found in {IMAGE_DIR.resolve()}")
         sys.exit(1)
