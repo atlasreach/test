@@ -19,7 +19,14 @@ echo ""
 mkdir -p "$OUT_DIR" "$LOG_DIR"
 
 # Navigate to Kohya directory
-cd /workspace/kohya_ss 2>/dev/null || cd ~/kohya_ss || { echo "❌ Kohya not found!"; exit 1; }
+if [ -d "/workspace/kohya_ss" ]; then
+    cd /workspace/kohya_ss
+elif [ -d "$HOME/kohya_ss" ]; then
+    cd "$HOME/kohya_ss"
+else
+    echo "❌ Kohya not found! Run: bash 2_setup_kohya.sh"
+    exit 1
+fi
 
 # RTX 4090 optimized settings (24GB VRAM)
 accelerate launch --num_processes=1 --mixed_precision=bf16 train_network.py \
