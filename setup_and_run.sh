@@ -12,6 +12,9 @@ fi
 echo "📦 Installing dependencies..."
 pip install torch torchvision transformers pillow tqdm --quiet
 
+# Disable hf_transfer to avoid compatibility issues
+export HF_HUB_ENABLE_HF_TRANSFER=0
+
 # Check CUDA availability
 python3 << 'PYCHECK'
 import torch
